@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>D3 Mapping</title>
+    <script type="text/javascript" src="d3/d3.v3.min.js"></script>
+    <style type="text/css">
+
+      .map-layer {
+        fill: #fff;
+        stroke: #aaa;
+      }
+    </style>
+  </head>
+  <body>
+
+    <script type="text/javascript">
+      var w = 500;
+      var h = 300;
+
+
+      var svg = d3.select("body").append("svg").attr("width", w).attr("height", h);
+      var g = svg.append('g');
+      var mapLayer = g.append('g').classed('map-layer', true);
+      d3.json("../data/nps.json", function(err, json) {
+        if(err) console.log("error fetching data" + err);
+        var center = d3.geo.centroid(json);
+        var scale = 150;
+        var offset = [w/2, h/2];
+
+        var projection = d3.geo.mercator().translate(offset).center(center).scale(scale);
+        var path = d3.geo.path().projection(projection);
+
+        var bounds = path.bounds(json);
+        var hscale = scale*w / (bounds[1][0] - bounds[0][0]);
+        var vscale = scale*h / (bounds[1][1] - bounds[0][1]);
+        var scale = (hscale < vscale) ? hscale : vscale;
+        var offset = [w - (bounds[0][0] + bounds[1][0])/2, h - (bounds[0][1] + bounds[1][1])/2];
+
+        projection = d3.geo.mercator().center(center).scale(scale).translate(offset);
+        path = path.projection(projection);
+
+        var features = json.features;
+        mapLayer.selectAll('path')
+           .data(features)
+           .enter()
+           .append('path')
+           .attr('d', path)
+           //.style('fill', 'green')
+           .style('stroke-width', '3')
+           .style('stroke', 'steelblue');
+      });
+    </script>
+  </body>
+</html>
